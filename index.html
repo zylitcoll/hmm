@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title id="page-title">Drama Player</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+    }
+
+    .sidebar {
+      width: 200px;
+      background-color: #222;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .sidebar h2 {
+      margin-top: 0;
+    }
+
+    .episode-item {
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 5px;
+      margin-bottom: 5px;
+    }
+
+    .episode-item:hover {
+      background-color: #444;
+    }
+
+    .episode-item.active {
+      background-color: #007bff;
+      color: white;
+      font-weight: bold;
+    }
+
+    .main {
+      flex: 1;
+      padding: 20px;
+      text-align: center;
+    }
+
+    video {
+      width: 80%;
+      max-width: 800px;
+      border-radius: 10px;
+      background: black;
+    }
+
+    .controls {
+      margin-top: 20px;
+    }
+
+    button {
+      background: #333;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      margin: 0 10px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Episodes</h2>
+    <div id="episode-list"></div>
+  </div>
+
+  <div class="main">
+    <h1 id="judul">Loading...</h1>
+    <h2>Episode <span id="episode-num">1</span></h2>
+
+    <video id="video" controls crossorigin="anonymous"></video>
+
+    <div class="controls">
+      <button onclick="prev()">⬅ Prev</button>
+      <button onclick="next()">Next ➡</button>
+    </div>
+  </div>
+
+  <script>
+    const baseUrl = "https://www.dramahouse.app/video/";
+    let judul = "爸妈的尊严"; // kamu bisa ubah judul di sini
+    let episode = 1;
+    const max = 80; // jumlah episode
+
+    const video = document.getElementById("video");
+    const episodeNum = document.getElementById("episode-num");
+    const judulElemen = document.getElementById("judul");
+    const pageTitle = document.getElementById("page-title");
+    const episodeList = document.getElementById("episode-list");
+
+    function updateJudul() {
+      judulElemen.textContent = judul;
+      pageTitle.textContent = judul;
+    }
+
+    function highlightActiveEpisode() {
+      document.querySelectorAll('.episode-item').forEach((item, index) => {
+        item.classList.toggle('active', index + 1 === episode);
+      });
+    }
+
+    async function updateVideo() {
+      updateJudul();
+      highlightActiveEpisode();
+
+      const mp4Url = `${baseUrl}${judul}/${episode}.mp4`;
+      const srtUrl = `${baseUrl}${judul}/${episode}_id.srt`;
+
+      // Hapus subtitle lama
+      [...video.querySelectorAll("track")].forEach(track => track.remove());
+
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+      video.src = mp4Url;
+
+      try {
+        const res = await fetch(srtUrl);
+        if (res.ok) {
+          const srtText = await res.text();
+          const vttText = convertSRTtoVTT(srtText);
+          const vttBlob = new Blob([vttText], { type: 'text/vtt' });
+          const vttUrl = URL.createObjectURL(vttBlob);
+
+          const track = document.createElement("track");
+          track.kind = "subtitles";
+          track.label = "Indonesian";
+          track.srclang = "id";
+          track.src = vttUrl;
+          track.default = true;
+          video.appendChild(track);
+
+          video.onloadedmetadata = () => {
+            setTimeout(() => {
+              // 👇 aktifkan subtitle manual
+              if (video.textTracks.length > 0) {
+                video.textTracks[0].mode = "showing";
+              }
+              video.play();
+            }, 300);
+          };
+        } else {
+          console.warn("Subtitle not found:", srtUrl);
+          video.onloadedmetadata = () => {
+            video.play();
+          };
+        }
+      } catch (err) {
+        console.error("Error loading subtitle:", err);
+      }
+
+      episodeNum.textContent = episode;
+    }
+
+    function convertSRTtoVTT(srt) {
+      return "WEBVTT\n\n" + srt
+        .replace(/\r+/g, '')
+        .replace(/(\d+)\n(\d{2}:\d{2}:\d{2},\d{3}) -->/g, '$2 -->')
+        .replace(/,/g, '.');
+    }
+
+    function buildSidebar() {
+      for (let i = 1; i <= max; i++) {
+        const item = document.createElement("div");
+        item.className = "episode-item";
+        item.textContent = `Episode ${i}`;
+        item.onclick = () => {
+          episode = i;
+          updateVideo();
+        };
+        episodeList.appendChild(item);
+      }
+    }
+
+    function next() {
+      if (episode < max) {
+        episode++;
+        updateVideo();
+      }
+    }
+
+    function prev() {
+      if (episode > 1) {
+        episode--;
+        updateVideo();
+      }
+    }
+
+    // Auto next episode
+    video.addEventListener("ended", () => {
+      if (episode < max) {
+        episode++;
+        updateVideo();
+      } else {
+        alert("🎉 Semua episode selesai!");
+      }
+    });
+
+    // Inisialisasi
+    buildSidebar();
+    updateVideo();
+  </script>
+</body>
+</html>
