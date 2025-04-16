@@ -1,91 +1,89 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>爸妈的尊严 - Video Player</title>
-  <style>
-    body {
-      background: #111;
-      color: #fff;
-      text-align: center;
-      font-family: sans-serif;
-      margin: 0;
-      padding: 20px;
-    }
-    video {
-      width: 80%;
-      max-width: 800px;
-      border-radius: 10px;
-      margin-top: 20px;
-      background: black;
-    }
-    .controls {
-      margin-top: 20px;
-    }
-    button {
-      background: #333;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      margin: 0 10px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #555;
-    }
-  </style>
-</head>
-<body>
-
-  <h1>爸妈的尊严 - Episode <span id="episode-num">1</span></h1>
-  <video id="video" controls autoplay>
-    <!-- Awalnya tanpa <source>, langsung via JS -->
-  </video>
-
-  <div class="controls">
-    <button onclick="prev()">⬅ Prev</button>
-    <button onclick="next()">Next ➡</button>
-  </div>
-
-  <script>
-    let episode = 1;
-    const max = 30;
-    const video = document.getElementById("video");
-    const episodeNum = document.getElementById("episode-num");
-
-    function updateVideo() {
-      const newSrc = `https://www.dramahouse.app/video/爸妈的尊严/${episode}.mp4`;
-      const currentTime = video.currentTime;
-      const isPaused = video.paused;
-
-      video.src = newSrc;
-
-      video.onloadedmetadata = () => {
-        video.currentTime = 0; // atau currentTime jika ingin melanjutkan
-        if (!isPaused) video.play();
-      };
-
-      episodeNum.textContent = episode;
-    }
-
-    function next() {
-      if (episode < max) {
-        episode++;
-        updateVideo();
+  <head>
+    <meta charset="UTF-8" />
+    <title>爸妈的尊严 - Video Player</title>
+    <style>
+      body {
+        background: #111;
+        color: #fff;
+        text-align: center;
+        font-family: sans-serif;
+        margin: 0;
+        padding: 20px;
       }
-    }
-
-    function prev() {
-      if (episode > 1) {
-        episode--;
-        updateVideo();
+      video {
+        width: 80%;
+        max-width: 800px;
+        border-radius: 10px;
+        margin-top: 20px;
+        background: black;
       }
-    }
+      .controls {
+        margin-top: 20px;
+      }
+      button {
+        background: #333;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        margin: 0 10px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>爸妈的尊严 - Episode <span id="episode-num">1</span></h1>
+    <video id="video" controls autoplay>
+      <!-- Awalnya tanpa <source>, langsung via JS -->
+    </video>
 
-    // Load episode 1 di awal
-    updateVideo();
-  </script>
+    <div class="controls">
+      <button onclick="prev()">⬅ Prev</button>
+      <button onclick="next()">Next ➡</button>
+    </div>
 
-</body>
+    <script>
+      let episode = 1;
+      const max = 30;
+      const video = document.getElementById("video");
+      const episodeNum = document.getElementById("episode-num");
+
+      function updateVideo() {
+        const newSrc = `https://www.dramahouse.app/video/爸妈的尊严/${episode}.mp4`;
+        const currentTime = video.currentTime;
+        const isPaused = video.paused;
+
+        video.src = newSrc;
+
+        video.onloadedmetadata = () => {
+          video.currentTime = 0; // atau currentTime jika ingin melanjutkan
+          if (!isPaused) video.play();
+        };
+
+        episodeNum.textContent = episode;
+      }
+
+      function next() {
+        if (episode < max) {
+          episode++;
+          updateVideo();
+        }
+      }
+
+      function prev() {
+        if (episode > 1) {
+          episode--;
+          updateVideo();
+        }
+      }
+
+      // Load episode 1 di awal
+      updateVideo();
+    </script>
+  </body>
 </html>
