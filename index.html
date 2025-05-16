@@ -2,133 +2,449 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title id="page-title">Drama Player</title>
     <style>
+      :root {
+        --primary: #4361ee;
+        --primary-dark: #3a56d4;
+        --bg: #111;
+        --sidebar-bg: #1a1a1a;
+        --card-bg: #222;
+        --text: #f8f9fa;
+        --text-muted: #adb5bd;
+        --hover: rgba(255, 255, 255, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
       body {
         margin: 0;
-        background: #111;
-        color: white;
-        font-family: sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          "Segoe UI",
+          Roboto,
+          -apple-system,
+          sans-serif;
         display: flex;
+        min-height: 100vh;
+        line-height: 1.5;
       }
 
       .sidebar {
-        width: 200px;
-        background-color: #222;
+        width: 260px;
+        background-color: var(--sidebar-bg);
         height: 100vh;
         overflow-y: auto;
-        padding: 20px;
+        padding: 1.5rem 1rem;
+        position: sticky;
+        top: 0;
+        flex-shrink: 0;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       }
 
       .sidebar h2 {
-        margin-top: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+
+      .search-box {
+        width: 100%;
+        padding: 0.5rem 1rem;
+        margin-bottom: 1rem;
+        background: var(--card-bg);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        color: var(--text);
+        outline: none;
+      }
+
+      .search-box:focus {
+        border-color: var(--primary);
+      }
+
+      .episode-list {
+        display: grid;
+        gap: 0.5rem;
       }
 
       .episode-item {
         cursor: pointer;
-        padding: 8px;
-        border-radius: 5px;
-        margin-bottom: 5px;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        background: var(--card-bg);
+        transition: all 0.2s ease;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
       }
 
       .episode-item:hover {
-        background-color: #444;
+        background: var(--hover);
       }
 
       .episode-item.active {
-        background-color: #007bff;
+        background: var(--primary);
         color: white;
-        font-weight: bold;
+        font-weight: 500;
+      }
+
+      .episode-item .episode-number {
+        display: inline-block;
+        width: 2rem;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+
+      .episode-item.active .episode-number {
+        color: rgba(255, 255, 255, 0.8);
       }
 
       .main {
         flex: 1;
-        padding: 20px;
-        text-align: center;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .player-container {
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .video-wrapper {
+        position: relative;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        height: 0;
+        overflow: hidden;
+        border-radius: 10px;
+        background: black;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        margin-bottom: 1.5rem;
       }
 
       video {
-        width: 80%;
-        max-width: 800px;
-        border-radius: 10px;
-        background: black;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        outline: none;
+      }
+
+      .video-info {
+        width: 100%;
+        max-width: 1000px;
+        margin-bottom: 1.5rem;
+      }
+
+      .video-info h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .video-info .episode-title {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
       }
 
       .controls {
-        margin-top: 20px;
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
       }
 
       button {
-        background: #333;
+        background: var(--primary);
         color: white;
-        padding: 10px 20px;
+        padding: 0.75rem 1.5rem;
         border: none;
-        border-radius: 5px;
-        margin: 0 10px;
+        border-radius: 6px;
         cursor: pointer;
+        font-weight: 500;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
       }
 
       button:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      button:disabled {
         background: #555;
+        cursor: not-allowed;
+        opacity: 0.7;
+        transform: none !important;
+      }
+
+      .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        font-size: 1.5rem;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 6px;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .toast.show {
+        opacity: 1;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          flex-direction: column;
+        }
+
+        .sidebar {
+          width: 100%;
+          height: auto;
+          position: static;
+          border-right: none;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .main {
+          padding: 1.5rem;
+        }
+
+        .episode-list {
+          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        }
       }
     </style>
   </head>
   <body>
     <div class="sidebar">
-      <h2>Episodes</h2>
-      <div id="episode-list"></div>
+      <div class="sidebar-header">
+        <h2>Episodes</h2>
+      </div>
+      <input
+        type="text"
+        class="search-box"
+        placeholder="Search episodes..."
+        id="search-box"
+      />
+      <div class="episode-list" id="episode-list"></div>
     </div>
 
     <div class="main">
-      <h1 id="judul">Loading...</h1>
-      <h2>Episode <span id="episode-num">1</span></h2>
+      <div class="player-container">
+        <div class="video-info">
+          <h1 id="judul">Loading...</h1>
+          <div class="episode-title">
+            Episode <span id="episode-num">1</span>
+          </div>
+        </div>
 
-      <video id="video" controls crossorigin="anonymous"></video>
+        <div class="video-wrapper">
+          <video
+            id="video"
+            controls
+            crossorigin="anonymous"
+            preload="auto"
+          ></video>
+        </div>
 
-      <div class="controls">
-        <button onclick="prev()">⬅ Prev</button>
-        <button onclick="next()">Next ➡</button>
+        <div class="controls">
+          <button onclick="prev()" id="prev-btn">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Prev
+          </button>
+          <button onclick="next()" id="next-btn">
+            Next
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
+    <div class="loading" id="loading" style="display: none">Loading...</div>
+    <div class="toast" id="toast"></div>
+
     <script>
-      const baseUrl = "https://www.dramahouse.app/video/";
-      let judul = "黑色月光"; // kamu bisa ubah judul di sini
-      let episode = 1;
-      const max = 72; // jumlah episode
+      // Configuration
+      const config = {
+        baseUrl: "https://www.dramahouse.app/video/",
+        title: "黑色月光",
+        currentEpisode: 1,
+        totalEpisodes: 72,
+        defaultSubtitleLang: "id",
+      };
 
-      const video = document.getElementById("video");
-      const episodeNum = document.getElementById("episode-num");
-      const judulElemen = document.getElementById("judul");
-      const pageTitle = document.getElementById("page-title");
-      const episodeList = document.getElementById("episode-list");
+      // DOM Elements
+      const elements = {
+        video: document.getElementById("video"),
+        episodeNum: document.getElementById("episode-num"),
+        judulElemen: document.getElementById("judul"),
+        pageTitle: document.getElementById("page-title"),
+        episodeList: document.getElementById("episode-list"),
+        searchBox: document.getElementById("search-box"),
+        prevBtn: document.getElementById("prev-btn"),
+        nextBtn: document.getElementById("next-btn"),
+        loading: document.getElementById("loading"),
+        toast: document.getElementById("toast"),
+      };
 
-      function updateJudul() {
-        judulElemen.textContent = judul;
-        pageTitle.textContent = judul;
+      // State
+      const state = {
+        isLoading: false,
+        episodes: [],
+      };
+
+      // Initialize the player
+      function init() {
+        buildEpisodeList();
+        updateVideo();
+        setupEventListeners();
       }
 
-      function highlightActiveEpisode() {
-        document.querySelectorAll(".episode-item").forEach((item, index) => {
-          item.classList.toggle("active", index + 1 === episode);
+      // Build the episode list
+      function buildEpisodeList() {
+        elements.episodeList.innerHTML = "";
+        state.episodes = Array.from(
+          { length: config.totalEpisodes },
+          (_, i) => i + 1,
+        );
+
+        state.episodes.forEach((ep) => {
+          const item = document.createElement("div");
+          item.className = "episode-item";
+          item.innerHTML = `
+            <span class="episode-number">${ep}</span>
+            <span class="episode-text">Episode ${ep}</span>
+          `;
+          item.onclick = () => loadEpisode(ep);
+          elements.episodeList.appendChild(item);
         });
       }
 
-      async function updateVideo() {
-        updateJudul();
+      // Update UI based on current episode
+      function updateUI() {
+        elements.judulElemen.textContent = config.title;
+        elements.pageTitle.textContent = `${config.title} - Episode ${config.currentEpisode}`;
+        elements.episodeNum.textContent = config.currentEpisode;
+
+        // Update button states
+        elements.prevBtn.disabled = config.currentEpisode <= 1;
+        elements.nextBtn.disabled =
+          config.currentEpisode >= config.totalEpisodes;
+
         highlightActiveEpisode();
+      }
 
-        const mp4Url = `${baseUrl}${judul}/${episode}.mp4`;
-        const srtUrl = `${baseUrl}${judul}/${episode}_id.srt`;
+      // Highlight active episode in sidebar
+      function highlightActiveEpisode() {
+        document.querySelectorAll(".episode-item").forEach((item, index) => {
+          item.classList.toggle("active", index + 1 === config.currentEpisode);
+        });
+      }
 
-        // Hapus subtitle lama
-        [...video.querySelectorAll("track")].forEach((track) => track.remove());
+      // Load a specific episode
+      async function loadEpisode(episode) {
+        if (state.isLoading) return;
 
-        video.pause();
-        video.removeAttribute("src");
-        video.load();
-        video.src = mp4Url;
+        config.currentEpisode = episode;
+        state.isLoading = true;
+        showLoading();
 
+        try {
+          await updateVideo();
+        } catch (error) {
+          showToast("Failed to load episode");
+          console.error("Error loading episode:", error);
+        } finally {
+          state.isLoading = false;
+          hideLoading();
+        }
+      }
+
+      // Update video source and subtitles
+      async function updateVideo() {
+        updateUI();
+
+        const mp4Url = `${config.baseUrl}${encodeURIComponent(config.title)}/${config.currentEpisode}.mp4`;
+        const srtUrl = `${config.baseUrl}${encodeURIComponent(config.title)}/${config.currentEpisode}_${config.defaultSubtitleLang}.srt`;
+
+        // Clear existing tracks
+        [...elements.video.querySelectorAll("track")].forEach((track) =>
+          track.remove(),
+        );
+
+        // Reset video
+        elements.video.pause();
+        elements.video.removeAttribute("src");
+        elements.video.load();
+
+        // Set new source
+        elements.video.src = mp4Url;
+
+        // Try to load subtitles
         try {
           const res = await fetch(srtUrl);
           if (res.ok) {
@@ -139,34 +455,41 @@
 
             const track = document.createElement("track");
             track.kind = "subtitles";
-            track.label = "Indonesian";
-            track.srclang = "id";
+            track.label = "Subtitles";
+            track.srclang = config.defaultSubtitleLang;
             track.src = vttUrl;
             track.default = true;
-            video.appendChild(track);
+            elements.video.appendChild(track);
 
-            video.onloadedmetadata = () => {
+            elements.video.onloadedmetadata = () => {
               setTimeout(() => {
-                // 👇 aktifkan subtitle manual
-                if (video.textTracks.length > 0) {
-                  video.textTracks[0].mode = "showing";
+                if (elements.video.textTracks.length > 0) {
+                  elements.video.textTracks[0].mode = "showing";
                 }
-                video.play();
+                elements.video
+                  .play()
+                  .catch((e) => console.warn("Autoplay prevented:", e));
               }, 300);
             };
           } else {
             console.warn("Subtitle not found:", srtUrl);
-            video.onloadedmetadata = () => {
-              video.play();
+            elements.video.onloadedmetadata = () => {
+              elements.video
+                .play()
+                .catch((e) => console.warn("Autoplay prevented:", e));
             };
           }
         } catch (err) {
           console.error("Error loading subtitle:", err);
+          elements.video.onloadedmetadata = () => {
+            elements.video
+              .play()
+              .catch((e) => console.warn("Autoplay prevented:", e));
+          };
         }
-
-        episodeNum.textContent = episode;
       }
 
+      // Convert SRT to VTT format
       function convertSRTtoVTT(srt) {
         return (
           "WEBVTT\n\n" +
@@ -177,46 +500,82 @@
         );
       }
 
-      function buildSidebar() {
-        for (let i = 1; i <= max; i++) {
-          const item = document.createElement("div");
-          item.className = "episode-item";
-          item.textContent = `Episode ${i}`;
-          item.onclick = () => {
-            episode = i;
-            updateVideo();
-          };
-          episodeList.appendChild(item);
+      // Navigation functions
+      function prev() {
+        if (config.currentEpisode > 1) {
+          loadEpisode(config.currentEpisode - 1);
         }
       }
 
       function next() {
-        if (episode < max) {
-          episode++;
-          updateVideo();
+        if (config.currentEpisode < config.totalEpisodes) {
+          loadEpisode(config.currentEpisode + 1);
         }
       }
 
-      function prev() {
-        if (episode > 1) {
-          episode--;
-          updateVideo();
-        }
+      // UI Helpers
+      function showLoading() {
+        elements.loading.style.display = "flex";
       }
 
-      // Auto next episode
-      video.addEventListener("ended", () => {
-        if (episode < max) {
-          episode++;
-          updateVideo();
-        } else {
-          alert("🎉 Semua episode selesai!");
-        }
-      });
+      function hideLoading() {
+        elements.loading.style.display = "none";
+      }
 
-      // Inisialisasi
-      buildSidebar();
-      updateVideo();
+      function showToast(message) {
+        elements.toast.textContent = message;
+        elements.toast.classList.add("show");
+        setTimeout(() => {
+          elements.toast.classList.remove("show");
+        }, 3000);
+      }
+
+      // Event listeners
+      function setupEventListeners() {
+        // Auto next episode
+        elements.video.addEventListener("ended", () => {
+          if (config.currentEpisode < config.totalEpisodes) {
+            next();
+          } else {
+            showToast("🎉 All episodes completed!");
+          }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener("keydown", (e) => {
+          if (e.target.tagName === "INPUT") return;
+
+          switch (e.key) {
+            case "ArrowLeft":
+              prev();
+              break;
+            case "ArrowRight":
+              next();
+              break;
+            case " ":
+              if (elements.video.paused) {
+                elements.video.play();
+              } else {
+                elements.video.pause();
+              }
+              break;
+          }
+        });
+
+        // Search functionality
+        elements.searchBox.addEventListener("input", (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          document.querySelectorAll(".episode-item").forEach((item) => {
+            const episodeText = item.textContent.toLowerCase();
+            item.style.display = episodeText.includes(searchTerm)
+              ? "flex"
+              : "none";
+          });
+        });
+      }
+
+      // Initialize the app
+      document.addEventListener("DOMContentLoaded", init);
     </script>
   </body>
 </html>
