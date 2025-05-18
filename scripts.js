@@ -1,9 +1,9 @@
 // Configuration
 const config = {
   baseUrl: "https://www.dramahouse.app/video/",
-  title: "我的左眼可以看穿一切",
+  title: "重生1996，我的校花通讯女王",
   currentEpisode: 1,
-  totalEpisodes: 160,
+  totalEpisodes: 100,
   defaultSubtitleLang: "id",
 };
 
