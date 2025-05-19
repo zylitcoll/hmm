@@ -1,9 +1,9 @@
 // Configuration
 const config = {
   baseUrl: "https://www.dramahouse.app/video/",
-  title: "重生1996，我的校花通讯女王",
+  title: "不爱后，白月光后悔了",
   currentEpisode: 1,
-  totalEpisodes: 100,
+  totalEpisodes: 90,
   defaultSubtitleLang: "id",
 };
 
@@ -46,9 +46,9 @@ function buildEpisodeList() {
     const item = document.createElement("div");
     item.className = "episode-item";
     item.innerHTML = `
-            <span class="episode-number">${ep}</span>
-            <span class="episode-text">Episode ${ep}</span>
-          `;
+      <span class="episode-number">${ep}</span>
+      <span class="episode-text">Episode ${ep}</span>
+    `;
     item.onclick = () => loadEpisode(ep);
     elements.episodeList.appendChild(item);
   });
@@ -60,7 +60,6 @@ function updateUI() {
   elements.pageTitle.textContent = `${config.title} - Episode ${config.currentEpisode}`;
   elements.episodeNum.textContent = config.currentEpisode;
 
-  // Update button states
   elements.prevBtn.disabled = config.currentEpisode <= 1;
   elements.nextBtn.disabled = config.currentEpisode >= config.totalEpisodes;
 
@@ -113,7 +112,6 @@ async function updateVideo() {
   // Set new source
   elements.video.src = mp4Url;
 
-  // Try to load subtitles
   try {
     const res = await fetch(srtUrl);
     if (res.ok) {
@@ -130,7 +128,9 @@ async function updateVideo() {
       track.default = true;
       elements.video.appendChild(track);
 
-      elements.video.onloadedmetadata = () => {
+      elements.video.load();
+
+      elements.video.oncanplay = () => {
         setTimeout(() => {
           if (elements.video.textTracks.length > 0) {
             elements.video.textTracks[0].mode = "showing";
@@ -142,7 +142,7 @@ async function updateVideo() {
       };
     } else {
       console.warn("Subtitle not found:", srtUrl);
-      elements.video.onloadedmetadata = () => {
+      elements.video.oncanplay = () => {
         elements.video
           .play()
           .catch((e) => console.warn("Autoplay prevented:", e));
@@ -150,7 +150,7 @@ async function updateVideo() {
     }
   } catch (err) {
     console.error("Error loading subtitle:", err);
-    elements.video.onloadedmetadata = () => {
+    elements.video.oncanplay = () => {
       elements.video
         .play()
         .catch((e) => console.warn("Autoplay prevented:", e));
